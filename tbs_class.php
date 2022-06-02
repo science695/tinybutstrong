@@ -136,6 +136,10 @@ public $NumStep;
 /** @var ?int */
 public $NumVal;
 
+/**
+ * @param string $Msg
+ * @return false
+ */
 public function DataAlert($Msg) {
 	if (is_array($this->TBS->_CurrBlock)) {
 		return $this->TBS->meth_Misc_Alert('when merging block "'.implode(',',$this->TBS->_CurrBlock).'"',$Msg);
@@ -144,12 +148,19 @@ public function DataAlert($Msg) {
 	}
 }
 
+/**
+ * @param mixed $SrcId Dynamic source from clsTbsDataSource
+ * @param clsTinyButStrong $TBS
+ * @return bool
+ */
 public function DataPrepare(&$SrcId,&$TBS) {
 
 	$this->SrcId = &$SrcId;
 	$this->TBS = &$TBS;
 	/** @var string|false $FctInfo */
 	$FctInfo = false;
+	/** @var ?string $FctCat */
+	$FctCat = null;
 	$FctObj = false;
 	
 	if (is_array($SrcId)) {
@@ -237,6 +248,11 @@ public function DataPrepare(&$SrcId,&$TBS) {
 
 }
 
+/**
+ * @param mixed $Query
+ * @param array|false $QryPrms
+ * @return bool
+ */
 public function DataOpen(&$Query,$QryPrms=false) {
 
 	// Init values
@@ -567,6 +583,8 @@ public function DataClose() {
 
 /**
  * Copy the record information from an object to another.
+ * @param object $from
+ * @param object $to
  */
 private function _CopyRec($from, $to) {
 	
@@ -577,6 +595,7 @@ private function _CopyRec($from, $to) {
 }
 
 /**
+ * @param object $obj
  * Fetch the next record on the object $obj.
  * This wil set the proiperties :
  *   $obj->CurrRec
@@ -748,6 +767,11 @@ public $_piOnFrm_Ok = false;
 /** @var array */
 public $_UserFctLst;
 
+/**
+ * @param ?array $Options
+ * @param string $VarPrefix
+ * @param string $FctPrefix
+ */
 function __construct($Options=null,$VarPrefix='',$FctPrefix='') {
 
 	// Compatibility
@@ -793,6 +817,11 @@ function __construct($Options=null,$VarPrefix='',$FctPrefix='') {
 
 }
 
+/**
+ * @param string $meth Extended Method name
+ * @param array $args
+ * @return mixed|void
+ */
 function __call($meth, $args) {
 	if (isset($this->ExtendedMethods[$meth])) {
 		if ( is_array($this->ExtendedMethods[$meth]) || is_string($this->ExtendedMethods[$meth]) ) {
@@ -805,6 +834,12 @@ function __call($meth, $args) {
 	}
 }
 
+/**
+ * @param string|string[] $o Option name to set, or array of options to set
+ * @param string|false $v Option value to set, or nothing if an array of options is sent in $o
+ * @param mixed $d extra value sent to f_Misc_UpdateArray for those advanced settings
+ * @return void
+ */
 function SetOption($o, $v=false, $d=false) {
 	if (!is_array($o)) $o = array($o=>$v);
 	if (isset($o['var_prefix'])) $this->VarPrefix = $o['var_prefix'];
@@ -844,6 +879,10 @@ function SetOption($o, $v=false, $d=false) {
 	if (isset($o['methods_allowed'])) $this->MethodsAllowed = $o['methods_allowed'];
 }
 
+/**
+ * @param string $o Option name to get
+ * @return array|bool|int|mixed|string
+ */
 function GetOption($o) {
 	if ($o==='all') {
 		$x = explode(',', 'var_prefix,fct_prefix,noerr,auto_merge,onload,onshow,att_delim,protect,turbo_block,charset,chr_open,chr_close,tpl_frms,block_alias,parallel_conf,include_path,render,prm_combo');
@@ -878,6 +917,10 @@ function GetOption($o) {
 	return $this->meth_Misc_Alert('with GetOption() method','option \''.$o.'\' is not supported.');
 }
 
+/**
+ * @param bool $ToGlobal Reset Var Ref to the global scope (true), or to an empty array (false)
+ * @return void
+ */
 public function ResetVarRef($ToGlobal) {
 	// We set a new variable in order to force the reference
 	// value NULL means that VarRef refers to $GLOBALS
@@ -955,7 +998,12 @@ public function SetVarRefItem($keyOrList, $value = null) {
 	
 }
 
-// Public methods
+/**
+ * Public method: Load in a template to read in
+ * 
+ * @param string $File Filename / path to load in the template
+ * @param string Charset
+ */
 public function LoadTemplate($File,$Charset='') {
 	if ($File==='') {
 		$this->meth_Misc_Charset($Charset);
@@ -995,6 +1043,14 @@ public function LoadTemplate($File,$Charset='') {
 	return $Ok;
 }
 
+/**
+ * Public method: Get the source of a merge block
+ * @param string $BlockName Name of the merge Block
+ * @param bool $AsArray Return the block source as an array, instead of a string
+ * @param bool $DefTags
+ * @param false|string $ReplaceWith
+ * @return array|false|string
+ */
 public function GetBlockSource($BlockName,$AsArray=false,$DefTags=true,$ReplaceWith=false) {
 	$RetVal = array();
 	$Nbr = 0;
@@ -1034,7 +1090,7 @@ public function GetBlockSource($BlockName,$AsArray=false,$DefTags=true,$ReplaceW
  * Get the value of a XML-HTML attribute targeted thanks to a TBS fields having parameter att.
  * @param  string  $Name       Name of the TBS fields. It must have parameter att.
  * @param  boolean $delete     (optional, true by default) Use true to delete the TBS field.
- * @return string|true|null|false  The value of the attribute,
+ * @return string|bool|null  The value of the attribute,
  *                                 true if the attribute is found without value,
  *                                 null if the TBS field, the target element is not found,
  *                                 or false for other error.
@@ -1073,6 +1129,13 @@ public function GetAttValue($Name, $delete = true) {
 	return $val;
 }
 
+/**
+ * @param string|string[] $BlockLst Block field name(s) in array or comma delimited list
+ * @param mixed $SrcId Dynamic source from clsTbsDataSource
+ * @param string $Query Query to send to clsTbsDataSource
+ * @param mixed $QryPrms Params to send to clsTbsDataSource
+ * @return bool|int|void
+ */
 public function MergeBlock($BlockLst,$SrcId='assigned',$Query='',$QryPrms=false) {
 
 	if ($SrcId==='assigned') {
@@ -1096,6 +1159,13 @@ public function MergeBlock($BlockLst,$SrcId='assigned',$Query='',$QryPrms=false)
 
 }
 
+/**
+ * @param string|string[] $NameLst Field name(s) in array or comma delimited list
+ * @param string|array $Value String value of field, or a user defined function's parameter list (array)
+ * @param bool $IsUserFct
+ * @param bool $DefaultPrm
+ * @return false|void
+ */
 public function MergeField($NameLst,$Value='assigned',$IsUserFct=false,$DefaultPrm=false) {
 
 	$FctCheck = $IsUserFct;
@@ -1162,6 +1232,7 @@ public function MergeField($NameLst,$Value='assigned',$IsUserFct=false,$DefaultP
  *                           Values are the parameters of the field as an array or as a string.
  *                           Parameter 'name' will be used as the new name of the field, by default it is the same name as the simple field.
  * @param string $blockName (optional) The name of the block for prefixing fields.
+ * @return void Operates on the source / opened document, doesn't return
  */
 public function ReplaceFields($fields, $blockName = false) {
 	
@@ -1201,6 +1272,10 @@ public function ReplaceFields($fields, $blockName = false) {
 	
 }
 
+/**
+ * @param false|int|mixed $Render Defaults to false, but can be a plugin code int or function arguments for a BeforeShow Callback
+ * @return bool|mixed
+ */
 public function Show($Render=false) {
 	$Ok = true;
 	if ($Render===false) $Render = $this->Render;
@@ -1227,6 +1302,11 @@ public function Show($Render=false) {
 	return $Ok;
 }
 
+/**
+ * @param int|string $Prm1 integer constant or string constant to trigger a plugin operation
+ * @param int|string $Prm2 Optional argument used for some operation / modes
+ * @return bool|mixed|void
+ */
 public function PlugIn($Prm1,$Prm2=0) {
 
 	if (is_numeric($Prm1)) {
@@ -1361,7 +1441,13 @@ function meth_Locator_FindTbs(&$Txt,$Name,$Pos,$ChrSub) {
 /**
  * Note: keep the « & » if the function is called with it.
  *
- * @return object
+ * @param object|clsTbsLocator $LocR a custom object similar to clsTbsLocator
+ * @param string $Blockname Name of the merge field to find
+ * @param string $Txt Source string to search within
+ * @param array $PrmLst
+ * @param bool $Cache Whether to enable caching
+ *
+ * @return object Custom object similar to clsTbsLocator, but only the core properties
  */
 function meth_Locator_SectionNewBDef(&$LocR,$BlockName,$Txt,$PrmLst,$Cache) {
 
@@ -1469,13 +1555,12 @@ function meth_Locator_SectionNewBDef(&$LocR,$BlockName,$Txt,$PrmLst,$Cache) {
 /**
  * Add a special section to the LocR.
  *
- * @param object $LocR 
- * @param string $BlockName
- * @param object $BDef 
+ * @param object|clsTbsLocator $LocR Custom object similar to clsTbsLocator
+ * @param string $BlockName Name of the merge Block
  * @param string $Field   Name of the field on which the group of values is defined.
  * @param string $FromPrm Parameter that induced the section.
  * 
- * @return object
+ * @return object Custom object similar to clsTbsLocator, but with basic properties only
  */
 function meth_Locator_MakeBDefFromField(&$LocR,$BlockName,$Field,$FromPrm) {
 
@@ -1498,8 +1583,8 @@ function meth_Locator_MakeBDefFromField(&$LocR,$BlockName,$Field,$FromPrm) {
 /**
  * Add a special section to the LocR.
  *
- * @param object $LocR 
- * @param string $BlockName
+ * @param object|clsTbsLocator $LocR Custom object similar to clsTbsLocator
+ * @param string $BlockName Name of the merge Block
  * @param object $BDef 
  * @param string $Type    Type of behavior: 'H' header, 'F' footer, 'S' splitter.
  * @param string $Field   Name of the field on which the group of values is defined.
@@ -1977,11 +2062,22 @@ function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
 
 }
 
+/**
+ * Return the first block locator just after the PosBeg position
+ * $Mode = 1 : Merge_Auto => doesn't save $Loc->BlockSrc, save the bounds of TBS Def tags instead, return also fields
+ * $Mode = 2 : FindBlockLst or GetBlockSource => save $Loc->BlockSrc without TBS Def tags
+ * $Mode = 3 : GetBlockSource => save $Loc->BlockSrc with TBS Def tags
+ *
+ * @param string $Txt The source string to modify.
+ * @param string $BlockName Name of the merge Block
+ * @param int $PosBeg Offset in $Txt to start searching
+ * @param string $ChrSub The Template tag Character '['
+ * @param int $Mode 1, 2 or 3
+ * @param bool $P1
+ * @param bool $FieldBefore
+ * @return clsTbsLocator|false
+ */
 function meth_Locator_FindBlockNext(&$Txt,$BlockName,$PosBeg,$ChrSub,$Mode,&$P1,&$FieldBefore) {
-// Return the first block locator just after the PosBeg position
-// Mode = 1 : Merge_Auto => doesn't save $Loc->BlockSrc, save the bounds of TBS Def tags instead, return also fields
-// Mode = 2 : FindBlockLst or GetBlockSource => save $Loc->BlockSrc without TBS Def tags
-// Mode = 3 : GetBlockSource => save $Loc->BlockSrc with TBS Def tags
 
 	$SearchDef = true;
 	/** @var false|clsTbsLocator */
@@ -2065,6 +2161,11 @@ function meth_Locator_FindBlockNext(&$Txt,$BlockName,$PosBeg,$ChrSub,$Mode,&$P1,
 
 }
 
+/**
+ * @param string $CurrVal
+ * @param array $PrmLst
+ * @return void
+ */
 function meth_Locator_PartAndRename(&$CurrVal, &$PrmLst) {
 
 	// Store part
@@ -2118,14 +2219,14 @@ function meth_Locator_PartAndRename(&$CurrVal, &$PrmLst) {
 }
 
 /**
- * Retrieve the list of all sections and their finition for a given block name.
+ * Retrieve the list of all sections and their definition for a given block name.
  *
- * @param string  $Txt
- * @param string  $BlockName
- * @param integer $Pos        
+ * @param string  $Txt Source string to search within
+ * @param string  $BlockName Name of the block for search prefix
+ * @param integer $Pos      Starting search index within $Txt   
  * @param string|false $SpePrm The parameter's name for Special section (used for navigation bar), or false if none.
  *
- * @return object
+ * @return object Custom object extended from clsTbsLocator
  */
 function meth_Locator_FindBlockLst(&$Txt,$BlockName,$Pos,$SpePrm) {
 // Return a locator object covering all block definitions, even if there is no block definition found.
@@ -2389,6 +2490,13 @@ function meth_Locator_FindBlockLst(&$Txt,$BlockName,$Pos,$SpePrm) {
 
 }
 
+/**
+ * @param string $Txt Source string to search within
+ * @param int $ZoneBeg Starting search index within $Txt
+ * @param int $ZoneEnd Ending search index within $Txt
+ * @param string $ConfId Preset Parallel Configuration Key
+ * @return array|false
+ */
 function meth_Locator_FindParallel(&$Txt, $ZoneBeg, $ZoneEnd, $ConfId) {
 
 	// Define configurations
@@ -2612,6 +2720,16 @@ function meth_Locator_FindParallelCol($SrcR, &$PosC, $tagC, $pCO, $p, $SrcROffse
 
 }
 
+/**
+ * @param string $Txt The source string to modify.
+ * @param string|string[] $BlockLst Block field name(s) in array or comma delimited list
+ * @param mixed $SrcId Dynamic source from clsTbsDataSource
+ * @param string $Query Query to send to clsTbsDataSource
+ * @param string|false $SpePrm The parameter's name for Special section (used for navigation bar), or false if none.
+ * @param ?int $SpeRecNum If the Special row option is set in a found tag, which record number is the special one
+ * @param mixed $QryPrms Params to send to clsTbsDataSource
+ * @return bool|int
+ */
 function meth_Merge_Block(&$Txt,$BlockLst,&$SrcId,&$Query,$SpePrm,$SpeRecNum,$QryPrms=false) {
 
 	$BlockSave = $this->_CurrBlock;
@@ -2757,6 +2875,12 @@ function meth_Merge_Block(&$Txt,$BlockLst,&$SrcId,&$Query,$SpePrm,$SpeRecNum,$Qr
 
 }
 
+/**
+ * @param string $Txt The source string to modify.
+ * @param clsTbsLocator $LocR Locator of the located block we should replace
+ * @param clsTbsDataSource $Src Data source to populate this parallel block
+ * @return void
+ */
 function meth_Merge_BlockParallel(&$Txt,&$LocR,&$Src) {
 
 	// Main loop
@@ -2789,6 +2913,13 @@ function meth_Merge_BlockParallel(&$Txt,&$LocR,&$Src) {
 
 }
 
+/**
+ * @param string $Txt The source string to modify.
+ * @param clsTbsLocator $LocR Locator of the located block we should replace
+ * @param clsTbsDataSource $Src Data source to populate this parallel block
+ * @param int $RecSpe If the Special row option is set in a found tag, which record number is the special one
+ * @return void
+ */
 function meth_Merge_BlockSections(&$Txt,&$LocR,&$Src,&$RecSpe) {
 
 	// Initialise
@@ -3008,8 +3139,15 @@ function meth_Merge_BlockSections(&$Txt,&$LocR,&$Src,&$RecSpe) {
 
 }
 
+/**
+ * Merge automatic fields with VarRef
+ *
+ * @param $Txt The source string to modify.
+ * @param bool $ConvStr Whether the replacement string should be converted / escaped
+ * @param string $Id
+ * @return false
+ */
 function meth_Merge_AutoVar(&$Txt,$ConvStr,$Id='var') {
-// Merge automatic fields with VarRef
 
 	$Pref = &$this->VarPrefix;
 	$PrefL = strlen($Pref);
@@ -3066,6 +3204,13 @@ function meth_Merge_AutoVar(&$Txt,$ConvStr,$Id='var') {
 
 }
 
+/**
+ * Merge Special Var Fields ([var..*])
+ *
+ * @param string $Txt The source string to modify.
+ * @param clsTbsLocator $Loc Locator of the located block we should replace
+ * @return false|int
+ */
 function meth_Merge_AutoSpe(&$Txt,&$Loc) {
 // Merge Special Var Fields ([var..*])
 
@@ -3596,6 +3741,14 @@ function meth_Misc_ChangeMode($Init,&$Loc,&$CurrVal) {
 	}
 }
 
+/**
+ * @param string $FctInfo This is modified in the return to be of type: array|array[]|callable
+ * @param ?string $FctCat
+ * @param object|false $FctObj
+ * @param string|false $ErrMsg A pass by reference to return an error string
+ * @param bool $FctCheck
+ * @return bool
+ */
 function meth_Misc_UserFctCheck(&$FctInfo,$FctCat,&$FctObj,&$ErrMsg,$FctCheck=false) {
 
 	$FctId = $FctCat.':'.$FctInfo;
@@ -4044,7 +4197,7 @@ function meth_Misc_DateFormat(&$Value, $Frm) {
 /**
  * Apply combo parameters.
  * @param array        $PrmLst The existing list of combo
- * @param object|false $Loc    The current locator, of false if called from an combo definition
+ * @param object|false $Loc    The current locator, of false if called from a combo definition
  */
 static function meth_Misc_ApplyPrmCombo(&$PrmLst, $Loc) {
 	
@@ -4076,7 +4229,7 @@ static function meth_Misc_ApplyPrmCombo(&$PrmLst, $Loc) {
 				}
 				$PrmLst = array_merge($ap, $PrmLst);
 			} else {
-				$this->meth_Misc_Alert("with parameter 'combo'", "Combo '". $a. "' is not yet set.");
+				$this->meth_Misc_Alert("with parameter 'combo'", "Combo '". $name. "' is not yet set.");
 			}
 		}
 		
