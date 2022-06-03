@@ -3296,6 +3296,13 @@ function meth_Merge_AutoSpe(&$Txt,&$Loc) {
 	}
 }
 
+/**
+ * @param string $Txt The source string to modify.
+ * @param mixed|false $CurrRec Current Record from DataSource
+ * @param int $RecNum Record index / number from DataSource
+ * @param int $PosMax Ending string offset to search through in $Txt / Source
+ * @return void
+ */
 function meth_Merge_FieldOutside(&$Txt, &$CurrRec, $RecNum, $PosMax) {
 	$Pos = 0;
 	$SubStart = ($CurrRec===false) ? false : 0;
@@ -3317,6 +3324,8 @@ function meth_Merge_FieldOutside(&$Txt, &$CurrRec, $RecNum, $PosMax) {
 /**
  * Check the values of previous and next record for expression.
  *
+ * @param object $BDef Custom object similar to clsTbsLocator, but describes a Block Definition
+ * @param clsTbsDataSource $Src
  * @return boolean
  */
 function meth_Merge_CheckBounds($BDef,$Src) {
@@ -3361,6 +3370,11 @@ function meth_Merge_CheckBounds($BDef,$Src) {
 	
 }
 
+/**
+ * @param object $BDef Custom object similar to clsTbsLocator, but describes a Block Definition
+ * @param clsTbsDataSource $Src
+ * @return boolean
+ */
 function meth_Merge_SectionNormal(&$BDef,&$Src) {
 
 	$Txt = $BDef->Src;
@@ -3468,6 +3482,12 @@ function meth_Merge_SectionNormal(&$BDef,&$Src) {
 
 }
 
+/**
+ * @param object $BDef Custom object similar to clsTbsLocator, but describes a Block Definition
+ * @param int $SrId
+ * @param clsTbsLocator $LocR
+ * @return boolean
+ */
 function meth_Merge_SectionSerial(&$BDef,&$SrId,&$LocR) {
 
 	$Txt = $BDef->Src;
@@ -3496,6 +3516,11 @@ function meth_Merge_SectionSerial(&$BDef,&$SrId,&$LocR) {
 
 /**
  * Merge [onload] or [onshow] fields and blocks
+ *
+ * @param string $Txt The source string to modify.
+ * @param string $Name Block Name
+ * @param bool $TplVar Check for Template Var Parameter in merge field
+ * @param bool $MergeVar Check for MergeVar matching this Block Name
  */
 function meth_Merge_AutoOn(&$Txt,$Name,$TplVar,$MergeVar) {
 
@@ -3620,7 +3645,13 @@ function meth_Merge_AutoOn(&$Txt,$Name,$TplVar,$MergeVar) {
 
 }
 
-// Prepare the strconv parameter
+/**
+ * Prepare the strconv parameter
+ * 
+ * @param clsTbsLocator $Loc Locator for the field we are working on
+ * @param string $StrConv String of settings to parse how the String Conversion will run on the field Value
+ * @return void 
+ */
 function meth_Conv_Prepare(&$Loc, $StrConv) {
 	$x = strtolower($StrConv);
 	$x = '+'.str_replace(' ','',$x).'+';
@@ -3634,7 +3665,13 @@ function meth_Conv_Prepare(&$Loc, $StrConv) {
 	if (strpos($x,'+nobr+')!==false) {$Loc->ConvStr = true; $Loc->ConvBr = false; }
 }
 
-// Convert a string with charset or custom function
+/**
+ * Convert a string with charset or custom function
+ *
+ * @param string $Txt The source string to modify.
+ * @param bool $ConvBr Whether to run nl2br to add html break tags
+ * @return void
+ */
 function meth_Conv_Str(&$Txt,$ConvBr=true) {
 	if ($this->Charset==='') { // Html by default
 		$Txt = htmlspecialchars($Txt, ENT_COMPAT); // ENT_COMPAT is no more the default value since PHP 8.1
@@ -3647,7 +3684,15 @@ function meth_Conv_Str(&$Txt,$ConvBr=true) {
 	}
 }
 
-// Standard alert message provided by TinyButStrong, return False is the message is cancelled.
+/**
+ * Standard alert message provided by TinyButStrong, return False is the message is cancelled.
+ *
+ * @param string|clsTbsDataSource $Src Error prefix, used to give context, or dataSource which we detect context
+ * @param string $Msg Full error
+ * @param bool $NoErrMsg Whether to show the message about using 'noerr'
+ * @param string|false $SrcType A error type / prefix
+ * @return false
+ */
 function meth_Misc_Alert($Src,$Msg,$NoErrMsg=false,$SrcType=false) {
 	$this->ErrCount++;
 	if ($this->NoErr || (PHP_SAPI==='cli') ) {
@@ -3680,6 +3725,12 @@ function meth_Misc_Alert($Src,$Msg,$NoErrMsg=false,$SrcType=false) {
 	return false;
 }
 
+/**
+ * @param string $Name Name of the field in Assigned array
+ * @param array $ArgLst Arguments to go to the merge function
+ * @param string|false $CallingMeth Method in clsTinyButStrong to call, either mergeblock or mergefield, or function defined in Assigned list for this field
+ * @return bool
+ */
 function meth_Misc_Assign($Name,&$ArgLst,$CallingMeth) {
 // $ArgLst must be by reference in order to have its inner items by reference too.
 
@@ -3713,6 +3764,12 @@ function meth_Misc_IsMainTpl() {
 	return ($this->_Mode==0);
 }
 
+/**
+ * @param bool $Init Is this called beforea subtemplate called? or after? Prepare for run, or cleanup / reset to prior
+ * @param clsTbsLocator $Loc
+ * @param mixed $CurrVal The value of the field to merge with.
+ * @return void
+ */
 function meth_Misc_ChangeMode($Init,&$Loc,&$CurrVal) {
 	if ($Init) {
 		// Save contents configuration
@@ -3912,11 +3969,23 @@ function meth_Misc_UserFctCheck(&$FctInfo,$FctCat,&$FctObj,&$ErrMsg,$FctCheck=fa
 
 }
 
+/**
+ * Run a subscript without any local variable damage
+ *
+ * @param string $_Subscript path to file to include / run
+ * @param $CurrVal Unused
+ * @param $CurrPrm Unused
+ * @return mixed
+ */
 function meth_Misc_RunSubscript(&$CurrVal,$CurrPrm) {
 // Run a subscript without any local variable damage
 	return @include($this->_Subscript);
 }
 
+/**
+ * @param string|array|false $Charset Value for Charset option
+ * @return void
+ */
 function meth_Misc_Charset($Charset) {
 	if ($Charset==='+') return;
 	$this->_CharsetFct = false;
@@ -3942,6 +4011,11 @@ function meth_Misc_Charset($Charset) {
 	$this->Charset = $Charset;
 }
 
+/**
+ * @param callable[] $FctBank Array of plugin functions to run
+ * @param array $ArgLst Arguments to send to the functions
+ * @return bool true if all returns are true, or false
+ */
 function meth_PlugIn_RunAll(&$FctBank,&$ArgLst) {
 	$OkAll = true;
 	foreach ($FctBank as $FctInfo) {
@@ -3951,6 +4025,12 @@ function meth_PlugIn_RunAll(&$FctBank,&$ArgLst) {
 	return $OkAll;
 }
 
+/**
+ * @param string|class-string $PlugInId Classname, or name of plugin to install
+ * @param array $ArgLst Arguments to pass to plugin's Install function
+ * @param $Auto unused
+ * @return bool Success
+ */
 function meth_PlugIn_Install($PlugInId,$ArgLst,$Auto) {
 
 	$ErrMsg = 'with plug-in \''.$PlugInId.'\'';
@@ -3988,6 +4068,12 @@ function meth_PlugIn_Install($PlugInId,$ArgLst,$Auto) {
 
 }
 
+/**
+ * @param string $PlugInId Plugin name to register the event
+ * @param string $Event Name of the event to register
+ * @param $NewRef Plugin's Class method name or function name to register
+ * @return bool Success
+ */
 function meth_PlugIn_SetEvent($PlugInId, $Event, $NewRef='') {
 // Enable or disable a plug-in event. It can be called by a plug-in, even during the OnInstall event. $NewRef can be used to change the method associated to the event.
 
@@ -4035,6 +4121,8 @@ function meth_PlugIn_SetEvent($PlugInId, $Event, $NewRef='') {
 
 /**
  * Convert any value to a string without specific formating.
+ * @param mixed $Value Input value to stringify
+ * @return string
  */
 static function meth_Misc_ToStr($Value) {
 	if (is_string($Value)) {
@@ -4051,7 +4139,10 @@ static function meth_Misc_ToStr($Value) {
 }
 
 /**
- * Return the formated representation of a Date/Time or numeric variable using a 'VB like' format syntax instead of the PHP syntax.
+ * Return the formatted representation of a Date/Time or numeric variable using a 'VB like' format syntax instead of the PHP syntax.
+ * @param mixed $Value Value of Merge Field
+ * @param array $Prmlst Parameters from Template Tag, checks for the 'frm' (format) option
+ * @return string
  */
 function meth_Misc_Format(&$Value,&$PrmLst) {
 
@@ -4138,6 +4229,11 @@ function meth_Misc_Format(&$Value,&$PrmLst) {
 
 }
 
+/**
+ * @param mixed $Value Value of Merge Field
+ * @param string $Frm Format string
+ * @return false|string
+ */
 function meth_Misc_DateFormat(&$Value, $Frm) {
 	
 	if (is_object($Value)) {
@@ -4196,8 +4292,9 @@ function meth_Misc_DateFormat(&$Value, $Frm) {
 
 /**
  * Apply combo parameters.
- * @param array        $PrmLst The existing list of combo
- * @param object|false $Loc    The current locator, of false if called from a combo definition
+ * @param array        $PrmLst The parameters from template tag, containing a list of combo
+ * @param clsTbsLocator|false $Loc    The current locator, of false if called from a combo definition
+ * @return void
  */
 static function meth_Misc_ApplyPrmCombo(&$PrmLst, $Loc) {
 	
@@ -4241,12 +4338,12 @@ static function meth_Misc_ApplyPrmCombo(&$PrmLst, $Loc) {
 
 /**
  * Simply update an array with another array.
- * It works for both indexed or associativ arrays.
+ * It works for both indexed or associative arrays.
  * NULL value will be deleted from the target array. 
  * 
  * @param array $array     The target array to be updated.
- * @param mixed $numerical True if the keys ar numerical. Use special keyword 'frm' for TBS formats, and 'prm' for a set of parameters.
- * @param mixed $v         An associative array of items to modify. Use value NULL for reset $array to an empty array. Other single value will be used with $d.
+ * @param bool|string $numerical True if the keys ar numerical. Use special keyword 'frm' for TBS formats, and 'prm' for a set of parameters.
+ * @param array|null|string $v         An associative array of items to modify. Use value NULL for reset $array to an empty array. Other single value will be used with $d.
  * @param mixed $d         To be used when $v is a single not null value. Will apply the key $v with value $d.
  */
  static function f_Misc_UpdateArray(&$array, $numerical, $v, $d) {
@@ -4295,6 +4392,11 @@ static function meth_Misc_ApplyPrmCombo(&$PrmLst, $Loc) {
 	}
 }
 
+/**
+ * @param string $FrmStr Field name to lookup saved format string
+ * @param string $Alias Aliased other field that has a configured format string
+ * @return array
+ */
 static function f_Misc_FormatSave(&$FrmStr,$Alias='') {
 
 	$FormatLst = &$GLOBALS['_TBS_FormatLst'];
@@ -4456,6 +4558,12 @@ static function f_Misc_FormatSave(&$FrmStr,$Alias='') {
 
 }
 
+/**
+ * Initialize some conversion settings on a Locator
+ * 
+ * @param clsTbsLocator $Loc
+ * @return void
+ */
 static function f_Misc_ConvSpe(&$Loc) {
 	if ($Loc->ConvMode!==2) {
 		$Loc->ConvMode = 2;
@@ -4489,14 +4597,12 @@ static function f_Misc_ParseFctForm($Str) {
 }
 
 /**
- * Check if a string condition is true.
+ * Check if a string condition (like "exrp1=expr2") is true or false.
  * @param  string  $Str The condition to check.
- * @return boolean True if the condition if checked.
+ * @return boolean True if the condition checked matches
  */
 static function f_Misc_CheckCondition($Str) {
-// Check if an expression like "exrp1=expr2" is true or false.
-
-	// Bluid $StrZ, wich is the same as $Str but with 'z' for each charactares that is proetected with "'".
+	// Build $StrZ, which is the same as $Str but with 'z' for each charactars that are protected with "'".
 	// This will help to search for operators outside protected strings.
 	$StrZ = $Str;
 	$Max = strlen($Str)-1;
@@ -4600,6 +4706,14 @@ static function f_Misc_DelDelimiter(&$Txt,$Delim) {
 	}
 }
 
+/**
+ * @param string|resource $Res Will be modified by reference to be the string contents or resource of the file
+ * @param string $File Filename to load in
+ * @param string $LastFile Use the directory of a previous attempt to see if this file is there
+ * @param array|false $IncludePath
+ * @param bool $Contents Whether to load the contents, or the file resource / stats into $Res
+ * @return bool
+ */
 static function f_Misc_GetFile(&$Res, &$File, $LastFile='', $IncludePath=false, $Contents=true) {
 // Load the content of a file into the text variable.
 
@@ -4636,9 +4750,9 @@ static function f_Misc_GetFile(&$Res, &$File, $LastFile='', $IncludePath=false, 
 
 /**
  * Try to open the file for reading.
- * @param string        $File The file name.
- * @param string|false $Dir  A The directory where to search, of false to omit directory.
- * @return resource|false Return the file pointer, of false on error. Note that urgument $File will be updated to the file with directory.
+ * @param string        $File The file name. !! Will be updated to the file with directory !!
+ * @param string|false $Dir  The directory where to search, of false to omit directory.
+ * @return resource|false Return the file pointer, of false on error.
  */
 static function f_Misc_TryFile(&$File, $Dir) {
 	if ($Dir==='') return false;
@@ -4650,7 +4764,17 @@ static function f_Misc_TryFile(&$File, $Dir) {
 }
 
 /**
- * Read TBS or XML tags, starting to the begining of the tag.
+ * Read TBS or XML tags, starting with the beginning of the tag.
+ * @param string $Txt Source string to search within
+ * @param int $Pos
+ * @param bool $XmlTag Is this an Xml Tag we are looking for?
+ * @param string $DelimChrs Delimiter for parameters
+ * @param string $BegStr prefix to match tag
+ * @param string $EndStr suffix to match tag
+ * @param clsTbsLocator $Loc
+ * @param int $PosEnd Maximum index in source $Txt to search within
+ * @param bool $WithPos If true, Set Parameter Position array
+ * @return void
  */
 static function f_Loc_PrmRead(&$Txt,$Pos,$XmlTag,$DelimChrs,$BegStr,$EndStr,&$Loc,&$PosEnd,$WithPos=false) {
 
@@ -4801,6 +4925,21 @@ static function f_Loc_PrmRead(&$Txt,$Pos,$XmlTag,$DelimChrs,$BegStr,$EndStr,&$Lo
 
 }
 
+/**
+ * @param string $Txt  Source string to search within
+ * @param clsTbsLocator $Loc
+ * @param bool $SubName If this is a subfield name
+ * @param int $Status
+ * @param bool $XmlTag Is this an Xml Tag we are looking for?
+ * @param string $DelimChr Delimiter for parameters
+ * @param int $DelimCnt What delimiter / depth level in the syntax
+ * @param int $PosName Offset in the string for the start of the name
+ * @param int $PosNend Offset in the string for the end of the name
+ * @param int $PosVal Offset in the string for the Value
+ * @param int $Pos Offset of the full context we are searching within
+ * @param bool $WithPos If true, Set Parameter Position array
+ * @return void
+ */
 static function f_Loc_PrmCompute(&$Txt,&$Loc,&$SubName,$Status,$XmlTag,$DelimChr,$DelimCnt,$PosName,$PosNend,$PosVal,$Pos,$WithPos) {
 
 	if ($Status===0) {
@@ -4846,7 +4985,7 @@ static function f_Loc_PrmCompute(&$Txt,&$Loc,&$SubName,$Status,$XmlTag,$DelimChr
 /**
  * Add a new parameter 'if or 'then' to the locator.
  * 
- * @param object  $Loc     The locator.
+ * @param clsTbsLocator  $Loc     The locator.
  * @param boolean $IsIf    Concerned parameter. True means 'if', false means 'then'.
  * @param string  $Val     The value of the parameter.
  * @param boolean $Ordered True means the parameter comes from the template and order must be checked. False means it comes from PHP and order is free.
@@ -4878,11 +5017,17 @@ static function f_Loc_PrmIfThen(&$Loc, $IsIf, $Val, $Ordered) {
 	}
 }
 
-/*
-This function enables to enlarge the pos limits of the Locator.
-If the search result is not correct, $PosBeg must not change its value, and $PosEnd must be False.
-This is because of the calling function.
-*/
+/**
+ * This function enables to enlarge the pos limits of the Locator.
+ * If the search result is not correct, $PosBeg must not change its value, and $PosEnd must be False.
+ * This is because of the calling function.
+ * 
+ * @param string $Txt  Source string to search within
+ * @param clsTbsLocator $Loc
+ * @param string $StrBeg Search string prefix
+ * @param string $StrEnd Search string suffix
+ * @return bool
+ */
 static function f_Loc_EnlargeToStr(&$Txt,&$Loc,$StrBeg,$StrEnd) {
 
 	// Search for the begining string
@@ -4909,8 +5054,16 @@ static function f_Loc_EnlargeToStr(&$Txt,&$Loc,$StrBeg,$StrEnd) {
 
 }
 
+/**
+ * Modify $Loc, return false if tags not found, returns the inner source of tag if $RetInnerSrc=true
+ *
+ * @param string $Txt Source string to search within
+ * @param clsTbsLocator $Loc
+ * @param string $TagStr Tag Search syntax
+ * @param bool $RetInnerSrc If true, Return inner source, else success boolean
+ * @return bool|string
+ */
 static function f_Loc_EnlargeToTag(&$Txt,&$Loc,$TagStr,$RetInnerSrc) {
-//Modify $Loc, return false if tags not found, returns the inner source of tag if $RetInnerSrc=true
 
 	$AliasLst = &$GLOBALS['_TBS_BlockAlias'];
 
@@ -5049,6 +5202,15 @@ static function f_Loc_EnlargeToTag(&$Txt,&$Loc,$TagStr,$RetInnerSrc) {
 
 }
 
+/**
+ * @param string $Txt Source string to search within
+ * @param string $Tag Tagname to Find
+ * @param callable $Fct Custom function to find tags
+ * @param int $Pos String offset to start searching
+ * @param bool $Forward If true, search forward, else search backwards
+ * @param false|int $LevelStop Level to stop checking encapsolation (false turns off always)
+ * @return clsTbsLocator|false|object
+ */
 static function f_Loc_Enlarge_Find($Txt, $Tag, $Fct, $Pos, $Forward, $LevelStop) {
 	if ($Fct===false) {
 		return self::f_Xml_FindTag($Txt,$Tag,(!$Forward),$Pos,$Forward,$LevelStop,false);
@@ -5064,6 +5226,10 @@ static function f_Loc_Enlarge_Find($Txt, $Tag, $Fct, $Pos, $Forward, $LevelStop)
 
 /**
  * Return the expected value for a boolean attribute
+ * @param mixed $CurrVal
+ * @param bool|string $AttTrue
+ * @param string $AttName
+ * @return string
  */
 static function f_Loc_AttBoolean($CurrVal, $AttTrue, $AttName) {
 	
@@ -5083,6 +5249,9 @@ static function f_Loc_AttBoolean($CurrVal, $AttTrue, $AttName) {
 
 /**
  * Affects the positions of a list of locators regarding to a specific moving locator.
+ * @param object|clsTbsLocator $LocM Moving Locator: clsTbsLocator extended with movement specific properties
+ * @param clsTbsLocator[] $LocLst List of Locators to update offsets
+ * @return true
  */
 static function f_Loc_Moving(&$LocM, &$LocLst) {
 	foreach ($LocLst as &$Loc) {
@@ -5102,11 +5271,11 @@ static function f_Loc_Moving(&$LocM, &$LocLst) {
 
 /**
  * Sort the locators in the list. Apply the bubble algorithm.
- * Deleted locators maked with DelMe.
- * @param array   $LocLst An array of locators.
- * @param boolean $DelEmbd True to deleted locators that embded other ones.
- * @param boolean $iFirst Index of the first item.
- * @return integer Return the number of met embedding locators.
+ * Deleted locators marked with DelMe.
+ * @param clsTbsLocator[]   $LocLst An array of locators.
+ * @param bool $DelEmbd True to deleted locators that embded other ones.
+ * @param int $iFirst Index of the first item.
+ * @return int Return the number of met embedding locators.
  */
 static function f_Loc_Sort(&$LocLst, $DelEmbd, $iFirst = 0) {
 
@@ -5146,10 +5315,14 @@ static function f_Loc_Sort(&$LocLst, $DelEmbd, $iFirst = 0) {
 }
 
 /**
- * Prepare all informations to move a locator according to parameter "att".
+ * Prepare all information to move a locator according to parameter "att".
  *
- * @param false|true|array $MoveLocLst true to simple move the loc, or an array of loc to rearrange the list after the move.
+ * @param string $Txt Source string to search within
+ * @param clsTbsLocator $Loc
+ * @param bool|clsTbsLocator[] $MoveLocLst true to simple move the loc, or an array of loc to rearrange the list after the move.
  *                          Note: rearrange doest not work with PHP4.
+ * @param false|string $AttDelim Attribute Delmitor string or false
+ * @param bool|clsTbsLocator[] $LocLst Unused
  */
 static function f_Xml_AttFind(&$Txt,&$Loc,$MoveLocLst=false,$AttDelim=false,$LocLst=false) {
 // att=div#class ; att=((div))#class ; att=+((div))#class
@@ -5240,7 +5413,11 @@ static function f_Xml_AttFind(&$Txt,&$Loc,$MoveLocLst=false,$AttDelim=false,$Loc
  * Move a locator in the source from its original location to the attribute location.
  * The new locator string is only '[]', no need to copy the full source since all parameters are saved in $Loc.*
  *
- * @param false|true|array $MoveLocLst If the function is called from the caching process, then this value is an array.
+ * @param string $Txt Source string to search within
+ * @param clsTbsLocator $Loc
+ * @param false|string $AttDelim
+ * @param false|clsTbsLocator[] $MoveLocLst If the function is called from the caching process, then this value is an array.
+ * @return true
  */
 static function f_Xml_AttMove(&$Txt, &$Loc, $AttDelim, &$MoveLocLst) {
 
@@ -5316,6 +5493,12 @@ static function f_Xml_AttMove(&$Txt, &$Loc, $AttDelim, &$MoveLocLst) {
 
 }
 
+/**
+ * @param string $Txt Source string to search within
+ * @param int $Nbr Max length of string to truncate
+ * @param string $MaxEnd String to put at the end of the truncation
+ * @return void
+ */
 static function f_Xml_Max(&$Txt,&$Nbr,$MaxEnd) {
 // Limit the number of HTML chars
 
@@ -5349,8 +5532,15 @@ static function f_Xml_Max(&$Txt,&$Nbr,$MaxEnd) {
 
 }
 
+/**
+ * Returns parts of the XML/HTML content, default is BODY.
+ *
+ * @param string $Txt Source string to search within
+ * @param string|true $TagLst List of tags to retrive, + delimited
+ * @param bool $AllIfNothing
+ * @return string
+ */
 static function f_Xml_GetPart(&$Txt, $TagLst, $AllIfNothing=false) {
-// Returns parts of the XML/HTML content, default is BODY.
 
 	if (($TagLst===true) || ($TagLst==='')) $TagLst = 'body';
 
@@ -5433,6 +5623,13 @@ static function f_Xml_GetPart(&$Txt, $TagLst, $AllIfNothing=false) {
  * $Tag=''  should work and found the start of the first opening tag of any name.
  * $Tag='/' should work and found the start of the first closing tag of any name.
  * Encapsulation levels are not featured yet.
+ * @param string $Txt  Source string to search within
+ * @param string $Tag Tag name to find
+ * @param bool $Opening Are we looking for an open xml tag?
+ * @param int $PosBeg string offset to begin searching
+ * @param bool $Forward If true, search forward, else backwards
+ * @param bool $Case Should we be case sensitive?
+ * @return bool|int
  */
 static function f_Xml_FindTagStart(&$Txt,$Tag,$Opening,$PosBeg,$Forward,$Case=true) {
 
@@ -5469,6 +5666,16 @@ static function f_Xml_FindTagStart(&$Txt,$Tag,$Opening,$PosBeg,$Forward,$Case=tr
  * It allows also to pass a number of encapsulations.
  * To ignore encapsulation and opengin/closing just set $LevelStop=false.
  * $Opening is used only when $LevelStop=false.
+ * 
+ * @param string $Txt Source string to search within
+ * @param string $Tag Tag name to find
+ * @param bool $Opening Are we looking for an open xml tag?
+ * @param int $PosBeg string offset to begin searching
+ * @param bool $Forward If true, search forward, else backwards
+ * @param false|int $LevelStop Level to stop checking encapsolation (false turns off always)
+ * @param bool $WithPrm Read in the parameters
+ * @param bool $WithPos If true, Set Parameter Position array
+ * @return clsTbsLocator|false
  */
 static function f_Xml_FindTag(&$Txt,$Tag,$Opening,$PosBeg,$Forward,$LevelStop,$WithPrm,$WithPos=false) {
 
@@ -5578,6 +5785,13 @@ static function f_Xml_FindTag(&$Txt,$Tag,$Opening,$PosBeg,$Forward,$LevelStop,$W
 
 }
 
+/**
+ * @param string $Txt Source string to search within
+ * @param int $PosBeg String offset to begin search
+ * @param bool $Forward If true, search forward, else backwards
+ * @param bool $IsRef
+ * @return int
+ */
 static function f_Xml_FindNewLine(&$Txt,$PosBeg,$Forward,$IsRef) {
 
 	$p = $PosBeg;
@@ -5606,6 +5820,14 @@ static function f_Xml_FindNewLine(&$Txt,$PosBeg,$Forward,$IsRef) {
 
 }
 
+/**
+ * @param string $Txt Source string to search within
+ * @param int $Pos String offset to start search
+ * @param string $tag XMl Tag Name
+ * @param int $PosBeg Position of the tag to we found (this is sent back by reference)
+ * @param int $p Position where we stopped reading (sent back by reference)
+ * @return bool
+ */
 static function f_Xml_GetNextEntityName($Txt, $Pos, &$tag, &$PosBeg, &$p) {
 /* 
  $tag : tag name
