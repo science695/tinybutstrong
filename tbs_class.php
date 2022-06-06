@@ -94,10 +94,10 @@ public $RSIsFirst = false;
 /** @var int|false */
 public $Type = false;
 public $SubType = 0;
-/** @var object|string|array|resource|iterator|ArrayObject|IteratorAggregate|mysqli|PDO|Zend_Db_Adapter_Abstract|SQLite3|SQLite3Stmt|SQLite3Result */
+/** @var object|string|array|resource|iterator|ArrayObject|IteratorAggregate|mysqli|\Doctrine\DBAL\Driver\PDOStatement|Zend_Db_Adapter_Abstract|SQLite3|SQLite3Stmt|SQLite3Result */
 public $SrcId = false;
 public $Query = '';
-/** @var object|string|array|resource|iterator|ArrayObject|IteratorAggregate|mysqli|PDO|Zend_Db_Adapter_Abstract|SQLite3|SQLite3Stmt|SQLite3Result */
+/** @var object|string|array|resource|iterator|ArrayObject|IteratorAggregate|mysqli|\Doctrine\DBAL\Driver\PDOStatement|Zend_Db_Adapter_Abstract|SQLite3|SQLite3Stmt|SQLite3Result */
 public $RecSet = false;
 /** @var int */
 public $RecNbr;
@@ -117,6 +117,7 @@ public $OnDataPiRef;
 public $OnDataPrmRef;
 
 // Info relative to the current record :
+/** @var bool|array|object */
 public $CurrRec = false; // Used by ByPage plugin
 public $RecKey = '';     // Used by ByPage plugin
 public $RecNum = 0;      // Used by ByPage plugin
@@ -768,7 +769,7 @@ public $_piOnFrm_Ok = false;
 public $_UserFctLst;
 
 /**
- * @param ?array $Options
+ * @param ?array|string $Options
  * @param string $VarPrefix
  * @param string $FctPrefix
  */
@@ -1442,7 +1443,7 @@ function meth_Locator_FindTbs(&$Txt,$Name,$Pos,$ChrSub) {
  * Note: keep the « & » if the function is called with it.
  *
  * @param object|clsTbsLocator $LocR a custom object similar to clsTbsLocator
- * @param string $Blockname Name of the merge field to find
+ * @param string $BlockName Name of the merge field to find
  * @param string $Txt Source string to search within
  * @param array $PrmLst
  * @param bool $Cache Whether to enable caching
@@ -1625,11 +1626,11 @@ function meth_Locator_SectionAddGrp(&$LocR,$BlockName,&$BDef,$Type,$Field,$FromP
  * Merge a locator with a text.
  *
  * @param string $Txt   The source string to modify.
- * @param object $Loc   The locator of the field to replace.
+ * @param clsTbsLocator $Loc   The locator of the field to replace.
  * @param mixed  $Value The value to merge with.
  * @param integer|false $SubStart The offset of subname to considere.
  *
- * @return integer The position just after the replaced field. Or the position of the start if the replace is canceled.
+ * @return int The position just after the replaced field. Or the position of the start if the replace is canceled.
  *                 This position can be useful because we don't know in advance how $Value will be replaced.
  *                 $Loc->PosNext is also set to the next search position when embedded fields are allowed.
  */
@@ -3142,7 +3143,7 @@ function meth_Merge_BlockSections(&$Txt,&$LocR,&$Src,&$RecSpe) {
 /**
  * Merge automatic fields with VarRef
  *
- * @param $Txt The source string to modify.
+ * @param string $Txt The source string to modify.
  * @param bool $ConvStr Whether the replacement string should be converted / escaped
  * @param string $Id
  * @return false
@@ -3158,7 +3159,7 @@ function meth_Merge_AutoVar(&$Txt,$ConvStr,$Id='var') {
 		$this->Charset = false;
 	}
 
-	// Then we scann all fields in the model
+	// Then we scan all fields in the model
 	$x = '';
 	$Pos = 0;
 	while ($Loc = $this->meth_Locator_FindTbs($Txt,$Id,$Pos,'.')) {
@@ -3222,7 +3223,14 @@ function meth_Merge_AutoSpe(&$Txt,&$Loc) {
 		case 'version': $x = $this->Version; break;
 		case 'script_name': $x = basename(((isset($_SERVER)) ? $_SERVER['PHP_SELF'] : $GLOBALS['HTTP_SERVER_VARS']['PHP_SELF'] )); break;
 		case 'template_name': $x = $this->_LastFile; break;
-		case 'template_date': $x = ''; if (self::f_Misc_GetFile($x,$this->_LastFile,'',array(),false)) $x = $x['mtime']; break;
+		case 'template_date':
+			$x = '';
+			if (self::f_Misc_GetFile($x,$this->_LastFile,'',array(),false)){
+				/** @var array $x */
+				$x = $x['mtime'];
+				/** @var int $x */
+			}
+			break;
 		case 'template_path': $x = dirname($this->_LastFile).'/'; break;
 		case 'name': $x = 'TinyButStrong'; break;
 		case 'logo': $x = '**TinyButStrong**'; break;
@@ -3372,12 +3380,13 @@ function meth_Merge_CheckBounds($BDef,$Src) {
 
 /**
  * @param object $BDef Custom object similar to clsTbsLocator, but describes a Block Definition
- * @param clsTbsDataSource $Src
- * @return boolean
+ * @param false|clsTbsDataSource $Src
+ * @return string
  */
 function meth_Merge_SectionNormal(&$BDef,&$Src) {
-
+	/** @var string $Txt */
 	$Txt = $BDef->Src;
+	/** @var clsTbsLocator[] $LocLst */
 	$LocLst = &$BDef->LocLst;
 	$iMax = $BDef->LocNbr;
 	$PosMax = strlen($Txt);
@@ -3687,7 +3696,7 @@ function meth_Conv_Str(&$Txt,$ConvBr=true) {
 /**
  * Standard alert message provided by TinyButStrong, return False is the message is cancelled.
  *
- * @param string|clsTbsDataSource $Src Error prefix, used to give context, or dataSource which we detect context
+ * @param string|clsTbsLocator $Src Error prefix, used to give context, or Locator which we detect context
  * @param string $Msg Full error
  * @param bool $NoErrMsg Whether to show the message about using 'noerr'
  * @param string|false $SrcType A error type / prefix
@@ -3765,7 +3774,7 @@ function meth_Misc_IsMainTpl() {
 }
 
 /**
- * @param bool $Init Is this called beforea subtemplate called? or after? Prepare for run, or cleanup / reset to prior
+ * @param bool $Init Is this called before a subtemplate called? or after? Prepare for run, or cleanup / reset to prior
  * @param clsTbsLocator $Loc
  * @param mixed $CurrVal The value of the field to merge with.
  * @return void
@@ -3973,8 +3982,8 @@ function meth_Misc_UserFctCheck(&$FctInfo,$FctCat,&$FctObj,&$ErrMsg,$FctCheck=fa
  * Run a subscript without any local variable damage
  *
  * @param string $_Subscript path to file to include / run
- * @param $CurrVal Unused
- * @param $CurrPrm Unused
+ * @param mixed $CurrVal Unused
+ * @param array $CurrPrm Unused
  * @return mixed
  */
 function meth_Misc_RunSubscript(&$CurrVal,$CurrPrm) {
@@ -4028,7 +4037,7 @@ function meth_PlugIn_RunAll(&$FctBank,&$ArgLst) {
 /**
  * @param string|class-string $PlugInId Classname, or name of plugin to install
  * @param array $ArgLst Arguments to pass to plugin's Install function
- * @param $Auto unused
+ * @param bool $Auto unused
  * @return bool Success
  */
 function meth_PlugIn_Install($PlugInId,$ArgLst,$Auto) {
@@ -4141,7 +4150,7 @@ static function meth_Misc_ToStr($Value) {
 /**
  * Return the formatted representation of a Date/Time or numeric variable using a 'VB like' format syntax instead of the PHP syntax.
  * @param mixed $Value Value of Merge Field
- * @param array $Prmlst Parameters from Template Tag, checks for the 'frm' (format) option
+ * @param array $PrmLst Parameters from Template Tag, checks for the 'frm' (format) option
  * @return string
  */
 function meth_Misc_Format(&$Value,&$PrmLst) {
@@ -4231,7 +4240,7 @@ function meth_Misc_Format(&$Value,&$PrmLst) {
 
 /**
  * @param mixed $Value Value of Merge Field
- * @param string $Frm Format string
+ * @param string[] $Frm Format string
  * @return false|string
  */
 function meth_Misc_DateFormat(&$Value, $Frm) {
